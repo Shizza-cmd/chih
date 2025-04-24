@@ -1,26 +1,24 @@
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
+from rest_framework import generics
+from rest_framework.permissions import IsAuthenticated
 from .models import Flashcard
 from .serializers import FlashcardSerializer
 
-@api_view(['GET'])
-def flashcard_list(request):
-    """
-    List all flashcards.
-    """
-    flashcards = Flashcard.objects.all()
-    serializer = FlashcardSerializer(flashcards, many=True)
-    return Response(serializer.data)
+class FlashcardList(generics.ListCreateAPIView):
+    serializer_class = FlashcardSerializer
+    permission_classes = [IsAuthenticated]
 
-@api_view(['GET'])
-def flashcard_detail(request, pk):
-    """
-    Retrieve a flashcard.
-    """
-    try:
-        flashcard = Flashcard.objects.get(pk=pk)
-    except Flashcard.DoesNotExist:
-        return Response(status=404)
+    def get_queryset(self):
+        user = self.request.user
+        return Flashcard.objects.filter(user=user)
 
-    serializer = FlashcardSerializer(flashcard)
-    return Response(serializer.data)
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class FlashcardDetail(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = FlashcardSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Flashcard.objects.filter(user=user)

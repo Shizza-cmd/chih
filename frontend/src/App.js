@@ -1,81 +1,78 @@
 import React, { useEffect } from 'react';
 import axios from 'axios';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import RegistrationForm from './components/RegistrationForm';
-import Home from './pages/Home'; // Import the Home component
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import Home from './pages/Home';
+import FlashcardList from './components/FlashcardList';
 
-axios.defaults.baseURL = 'http://127.0.0.1:8000'; // Set base URL
+axios.defaults.baseURL = 'http://127.0.0.1:8000';
 
 function App() {
-  const navigate = useNavigate(); // Use useNavigate
+    const navigate = useNavigate();
 
-  useEffect(() => {
-    // Add a request interceptor to attach the access token to every request
-    axios.interceptors.request.use(
-      (config) => {
-        const accessToken = localStorage.getItem('access_token');
-        if (accessToken) {
-          config.headers.Authorization = `Bearer ${accessToken}`;
-        }
-        return config;
-      },
-      (error) => {
-        return Promise.reject(error);
-      }
-    );
-
-    // Add a response interceptor to handle token refresh and authentication errors
-    axios.interceptors.response.use(
-      (response) => {
-        return response;
-      },
-      async (error) => {
-        const originalRequest = error.config;
-
-        if (error.response && error.response.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true;
-
-          const refreshToken = localStorage.getItem('refresh_token');
-          if (refreshToken) {
-            try {
-              const tokenResponse = await axios.post('/api/core/token/refresh/', {
-                refresh: refreshToken,
-              });
-
-              const { access } = tokenResponse.data;
-              localStorage.setItem('access_token', access);
-              axios.defaults.headers.common['Authorization'] = `Bearer ${access}`; // Apply the new token to axios defaults
-
-              originalRequest.headers.Authorization = `Bearer ${access}`; // Set the new token to the original request
-              return axios(originalRequest); // Retry the original request
-            } catch (refreshError) {
-              // If token refresh fails, redirect to login
-              localStorage.removeItem('access_token');
-              localStorage.removeItem('refresh_token');
-              navigate('/login'); // Use navigate for redirection
-              return Promise.reject(refreshError);
+    useEffect(() => {
+        axios.interceptors.request.use(
+            config => {
+                const accessToken = localStorage.getItem('access_token');
+                if (accessToken) {
+                    config.headers.Authorization = `Bearer ${accessToken}`;
+                }
+                return config;
+            },
+            error => {
+                return Promise.reject(error);
             }
-          } else {
-            // If no refresh token, redirect to login
-            navigate('/login'); // Use navigate for redirection
-          }
-        }
-        return Promise.reject(error);
-      }
-    );
-  }, [navigate]); // Include navigate in the dependency array
+        );
 
-  return (
-    <div>
-      <h1>My App</h1>
-      {/* Your other components */}
-      <Routes>
-        <Route path="/" element={<Home />} />  {/* Add the route for the Home component */}
-        <Route path="/register" element={<RegistrationForm />} />
-        {/* Your other routes */}
-      </Routes>
-    </div>
-  );
+        axios.interceptors.response.use(
+            response => {
+                return response;
+            },
+            async error => {
+                const originalRequest = error.config;
+
+                if (error.response && error.response.status === 401 && !originalRequest._retry) {
+                    originalRequest._retry = true;
+
+                    const refreshToken = localStorage.getItem('refresh_token');
+                    if (refreshToken) {
+                        try {
+                            const tokenResponse = await axios.post('/api/core/token/refresh/', {
+                                refresh: refreshToken
+                            });
+
+                            const { access } = tokenResponse.data;
+                            localStorage.setItem('access_token', access);
+                            axios.defaults.headers.common['Authorization'] = `Bearer ${access}`;
+
+                            originalRequest.headers.Authorization = `Bearer ${access}`;
+                            return axios(originalRequest);
+
+                        } catch (refreshError) {
+                            localStorage.removeItem('access_token');
+                            localStorage.removeItem('refresh_token');
+                            navigate('/login');
+                            return Promise.reject(refreshError);
+                        }
+                    } else {
+                        navigate('/login');
+                    }
+                }
+                return Promise.reject(error);
+            }
+        );
+    }, [navigate]);
+
+    return (
+        <div>
+            <h1>My App</h1>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/register" element={<RegistrationForm />} />
+                <Route path="/flashcards" element={<FlashcardList />} /> {/* Add FlashcardList route */}
+            </Routes>
+        </div>
+    );
 }
 
 export default App;

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 
 function RegistrationForm() {
   const [username, setUsername] = useState('');
@@ -8,7 +8,7 @@ function RegistrationForm() {
   const [password2, setPassword2] = useState('');
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); // Initialize useNavigate
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -22,7 +22,6 @@ function RegistrationForm() {
       });
 
       if (response.status === 201) {
-        // Registration successful, now login to get tokens
         const loginResponse = await axios.post('token/', {
           username: username,
           password: password,
@@ -33,7 +32,6 @@ function RegistrationForm() {
           localStorage.setItem('access_token', access);
           localStorage.setItem('refresh_token', refresh);
 
-          // Redirect to the root page
           navigate('/');
         } else {
           setError('Login failed after registration');
