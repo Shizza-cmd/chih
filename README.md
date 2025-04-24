@@ -20,4 +20,4 @@
 
 *Контакты для связи со мной:*  
   discord: _shizza  
-  mail: shizzawork@gmail.com  
+  email: shizzawork@gmail.com  
